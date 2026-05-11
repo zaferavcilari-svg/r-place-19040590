@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cloud Infrastructure Management Terminal</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { background-color: #f0f2f5; color: #333; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .main-container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1a73e8; font-size: 22px; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-top: 0; }
+        .action-bar { margin-top: 25px; display: flex; align-items: center; gap: 15px; }
+        button { background-color: #1a73e8; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        #log-status { font-size: 13px; font-weight: 600; color: #1a73e8; }
+        #data-display { background: #202124; color: #e8eaed; padding: 20px; border-radius: 8px; margin-top: 15px; height: 500px; overflow-y: auto; font-family: monospace; font-size: 12px; white-space: pre-wrap; border: 1px solid #3c4043; }
+        .export-link { text-decoration: none; background: #34a853; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <h1>Remote Resource Controller</h1>
+    <p>Sistem yapılandırması yüklendi. Verileri senkronize etmek için butona basın.</p>
+
+    <div class="action-bar">
+        <button onclick="startSync()">Sync Data</button>
+        <span id="log-status">Sistem hazır.</span>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a id="download-link" class="export-link">Yedek Dosyasını İndir (JSON)</a>
+    </div>
+
+    <div id="data-display">Bağlantı bekleniyor...</div>
+</div>
+
+<script>
+    // Senin verdiğin bilgiler buraya işlendi Muhammed
+    const config = {
+        apiKey: "AIzaSyBfm5A6CxP7kexdGhtG5-BJLqI-6QEzQvQ",
+        databaseURL: "https://r-place-19040590.firebaseio.com",
+        projectId: "r-place-19040590"
+    };
+
+    function startSync() {
+        const log = document.getElementById('log-status');
+        const display = document.getElementById('data-display');
+        const dlBtn = document.getElementById('download-link');
+
+        log.innerText = "Sinxronizasiya edilir...";
+
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(config);
+            }
+
+            const rootRef = firebase.database().ref('/');
+            rootRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    log.innerText = "Bağlantı Başarılı. Veriler Alındı.";
+                    log.style.color = "#188038";
+                    
+                    const prettyJson = JSON.stringify(data, null, 4);
+                    display.innerText = prettyJson;
+
+                    const blob = new Blob([prettyJson], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    dlBtn.href = url;
+                    dlBtn.download = "system_backup_report.json";
+                    dlBtn.style.display = "inline-block";
+                } else {
+                    log.innerText = "Hata: Veri çekilemedi.";
+                }
+            }, (err) => {
+                log.innerText = "Erişim Reddedildi!";
+                log.style.color = "#d93025";
+                display.innerText = "Güvenlik Duvarı Engeli: " + err.message;
+            });
+        } catch (e) {
+            log.innerText = "Kritik Hata!";
+            display.innerText = e.message;
+        }
+    }
+</script>
+
+</body>
+</html>
+
